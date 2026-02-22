@@ -171,3 +171,15 @@ function renderGrid(filterType, entityId) {
         tbody.appendChild(tr);
     }
 }
+async function apiRequest(path) {
+    const BASE_URL = "https://smart-timetable-899l.onrender.com/api";
+
+    const res = await fetch(BASE_URL + path);
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "API error");
+    }
+
+    return res.json();
+}
