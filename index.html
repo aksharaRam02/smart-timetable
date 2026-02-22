@@ -1,159 +1,83 @@
-// timetable.js
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Timetable Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-50 text-gray-800 font-inter antialiased min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-gray-100 z-10 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-calendar-days text-indigo-600 text-2xl mr-3"></i>
+                    <span class="font-bold text-xl tracking-tight text-gray-900">SmartTime</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="admin.html" class="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Admin</a>
+                    <a href="faculty.html" class="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Faculty</a>
+                    <a href="student.html" class="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Student</a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-const BASE_URL = "https://smart-timetable-899l.onrender.com/api";
+    <!-- Hero Section -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-indigo-50 to-white relative overflow-hidden">
+        <!-- Decorative blobs -->
+        <div class="absolute top-0 -left-4 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div class="absolute top-0 -right-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
 
-let currentTimetable = null;
-let allSubjects = {};
-let allFaculties = {};
-let allClassrooms = {};
-let allSemesters = {};
+        <div class="max-w-4xl mx-auto text-center relative z-10 w-full animate-fade-in-up">
+            <h1 class="text-5xl tracking-tight font-extrabold text-gray-900 sm:text-6xl md:text-7xl mb-6">
+                <span class="block">Optimize Your</span>
+                <span class="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Institution's Schedule</span>
+            </h1>
+            <p class="mt-3 max-w-2xl mx-auto text-base text-gray-500 sm:text-lg md:text-xl md:max-w-3xl mb-10">
+                Automatically generate conflict-free, AI-optimized timetables tailored to your constraints, faculty preferences, and room capacities.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <!-- Admin Card -->
+                <a href="admin.html" class="glass-card p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group cursor-pointer border border-white/50">
+                    <div class="w-16 h-16 mx-auto bg-indigo-100 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa-solid fa-user-tie text-2xl text-indigo-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Admin Portal</h3>
+                    <p class="text-gray-500 text-sm">Manage data, configure constraints, and generate intelligent schedules.</p>
+                </a>
 
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-const START_HOUR = 9;
-const END_HOUR = 17;
+                <!-- Faculty Card -->
+                <a href="faculty.html" class="glass-card p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group cursor-pointer border border-white/50">
+                    <div class="w-16 h-16 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa-solid fa-chalkboard-user text-2xl text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Faculty View</h3>
+                    <p class="text-gray-500 text-sm">Set preferences and view your personalized teaching schedule.</p>
+                </a>
 
-document.addEventListener("DOMContentLoaded", async () => {
-    try {
-        toggleSpinner(true);
+                <!-- Student Card -->
+                <a href="student.html" class="glass-card p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group cursor-pointer border border-white/50">
+                    <div class="w-16 h-16 mx-auto bg-pink-100 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa-solid fa-user-graduate text-2xl text-pink-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Student View</h3>
+                    <p class="text-gray-500 text-sm">Access your class sequences, rooms, and subject information seamlessly.</p>
+                </a>
+            </div>
+        </div>
+    </main>
 
-        // 1️⃣ Get timetable ID or load latest
-        const urlParams = new URLSearchParams(window.location.search);
-        let ttId = urlParams.get("id");
-
-        if (!ttId) {
-            const all = await apiRequest("/timetables/");
-            if (!all.length) {
-                throw new Error("No timetables found in database");
-            }
-            ttId = all[0].id;
-        }
-
-        // 2️⃣ Load metadata
-        const [subs, facs, rooms, sems] = await Promise.all([
-            apiRequest("/subjects/"),
-            apiRequest("/faculties/"),
-            apiRequest("/classrooms/"),
-            apiRequest("/semesters/")
-        ]);
-
-        subs.forEach(s => allSubjects[s.id] = s);
-        facs.forEach(f => allFaculties[f.id] = f);
-        rooms.forEach(r => allClassrooms[r.id] = r);
-        sems.forEach(s => allSemesters[s.id] = s);
-
-        // 3️⃣ Load timetable
-        currentTimetable = await apiRequest(`/timetables/${ttId}`);
-        document.getElementById("tt-fitness").textContent = currentTimetable.fitness_score;
-
-        setupFilters();
-
-    } catch (e) {
-        console.error(e);
-        alert("Frontend is connected, but backend returned an error:\n\n" + e.message);
-    } finally {
-        toggleSpinner(false);
-    }
-});
-
-/* ------------------ API ------------------ */
-
-async function apiRequest(path) {
-    const res = await fetch(BASE_URL + path);
-
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `API error at ${path}`);
-    }
-
-    return res.json();
-}
-
-/* ------------------ UI ------------------ */
-
-function toggleSpinner(show) {
-    const s = document.getElementById("loading-spinner");
-    if (!s) return;
-    show ? s.classList.remove("hidden") : s.classList.add("hidden");
-}
-
-function setupFilters() {
-    const fType = document.getElementById("filter-type");
-    const fEntity = document.getElementById("filter-entity");
-    const btn = document.getElementById("btn-apply-filter");
-
-    const updateEntityDropdown = () => {
-        fEntity.innerHTML = "";
-        let dataMap = {};
-
-        if (fType.value === "semester") dataMap = allSemesters;
-        else if (fType.value === "faculty") dataMap = allFaculties;
-        else if (fType.value === "classroom") dataMap = allClassrooms;
-
-        Object.values(dataMap).forEach(item => {
-            fEntity.innerHTML += `<option value="${item.id}">${item.name || item.id}</option>`;
-        });
-    };
-
-    fType.addEventListener("change", updateEntityDropdown);
-    updateEntityDropdown();
-
-    btn.addEventListener("click", () => {
-        renderGrid(fType.value, Number(fEntity.value));
-    });
-
-    if (Object.values(allSemesters).length) {
-        fEntity.value = Object.values(allSemesters)[0].id;
-        renderGrid("semester", Number(fEntity.value));
-    }
-}
-
-function renderGrid(filterType, entityId) {
-    const tbody = document.getElementById("grid-body");
-    tbody.innerHTML = "";
-
-    let filteredSessions = (currentTimetable.sessions || []).filter(s => {
-        const sub = allSubjects[s.subject_id];
-        if (!sub) return false;
-        if (filterType === "semester") return sub.semester_id === entityId;
-        if (filterType === "faculty") return s.faculty_id === entityId;
-        if (filterType === "classroom") return s.classroom_id === entityId;
-        return false;
-    });
-
-    document.getElementById("empty-state")
-        .classList.toggle("hidden", filteredSessions.length > 0);
-
-    let grid = {};
-    for (let h = START_HOUR; h < END_HOUR; h++) {
-        grid[h] = Object.fromEntries(DAYS.map(d => [d, null]));
-    }
-
-    filteredSessions.forEach(s => {
-        if (grid[s.start_time]) {
-            grid[s.start_time][s.day_of_week] = s;
-        }
-    });
-
-    for (let h = START_HOUR; h < END_HOUR; h++) {
-        const tr = document.createElement("tr");
-
-        const timeCell = document.createElement("td");
-        timeCell.className = "py-3 px-2 border-r bg-gray-50 font-medium";
-        timeCell.textContent = `${h}:00 - ${h + 1}:00`;
-        tr.appendChild(timeCell);
-
-        DAYS.forEach(day => {
-            const td = document.createElement("td");
-            td.className = "p-2 border-r h-24";
-
-            const s = grid[h][day];
-            if (s) {
-                td.innerHTML = `<strong>${allSubjects[s.subject_id]?.name}</strong>`;
-            }
-
-            tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-    }
-}
+    <footer class="bg-white border-t border-gray-100 py-6 text-center text-sm text-gray-500 z-10 w-full relative">
+        <p>&copy; 2026 SmartTime Solutions. All rights reserved.</p>
+    </footer>
+    
+    <script src="app.js"></script>
+</body>
+</html>
