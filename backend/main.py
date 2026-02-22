@@ -4,8 +4,8 @@ import models, schemas, database
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import algorithm
+import os
 
-# 👇 NEW IMPORTS (important)
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
@@ -17,7 +17,10 @@ app = FastAPI(
     redoc_url="/api/redoc"
 )
 
-# ✅ CORS
+# ------------------------
+# CORS
+# ------------------------
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,25 +30,41 @@ app.add_middleware(
 )
 
 # ------------------------
-# SERVE FRONTEND (IMPORTANT PART)
+# FRONTEND PATH SAFE FIX
 # ------------------------
 
-# Serve static files (JS, CSS, etc.)
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
-# Serve homepage
+# Serve CSS, JS, assets
+app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
+
+
+# --------- FRONTEND ROUTES ----------
+
 @app.get("/")
-def serve_home():
-    return FileResponse("frontend/index.html")
+def home():
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
-# Serve timetable page
+@app.get("/admin.html")
+def admin():
+    return FileResponse(os.path.join(FRONTEND_DIR, "admin.html"))
+
+@app.get("/faculty.html")
+def faculty():
+    return FileResponse(os.path.join(FRONTEND_DIR, "faculty.html"))
+
+@app.get("/student.html")
+def student():
+    return FileResponse(os.path.join(FRONTEND_DIR, "student.html"))
+
 @app.get("/timetable.html")
-def serve_timetable():
-    return FileResponse("frontend/timetable.html")
+def timetable():
+    return FileResponse(os.path.join(FRONTEND_DIR, "timetable.html"))
 
 
 # ------------------------
-# Database Dependency
+# DATABASE
 # ------------------------
 
 def get_db():
@@ -54,6 +73,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 # ------------------------
 # API ROUTES
