@@ -5,6 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import algorithm
 
+# 👇 NEW IMPORTS (important)
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(
@@ -13,14 +17,32 @@ app = FastAPI(
     redoc_url="/api/redoc"
 )
 
-# ✅ Allow frontend to connect (Render + browser safe)
+# ✅ CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # later you can lock to frontend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ------------------------
+# SERVE FRONTEND (IMPORTANT PART)
+# ------------------------
+
+# Serve static files (JS, CSS, etc.)
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# Serve homepage
+@app.get("/")
+def serve_home():
+    return FileResponse("frontend/index.html")
+
+# Serve timetable page
+@app.get("/timetable.html")
+def serve_timetable():
+    return FileResponse("frontend/timetable.html")
+
 
 # ------------------------
 # Database Dependency
@@ -34,15 +56,7 @@ def get_db():
         db.close()
 
 # ------------------------
-# Root Test (important!)
-# ------------------------
-
-@app.get("/")
-def read_root():
-    return {"status": "Backend working ✅"}
-
-# ------------------------
-# Departments
+# API ROUTES
 # ------------------------
 
 @app.post("/api/departments/", response_model=schemas.Department)
@@ -57,9 +71,6 @@ def create_department(department: schemas.DepartmentCreate, db: Session = Depend
 def read_departments(db: Session = Depends(get_db)):
     return db.query(models.Department).all()
 
-# ------------------------
-# Courses
-# ------------------------
 
 @app.post("/api/courses/", response_model=schemas.Course)
 def create_course(course: schemas.CourseCreate, db: Session = Depends(get_db)):
@@ -73,9 +84,6 @@ def create_course(course: schemas.CourseCreate, db: Session = Depends(get_db)):
 def read_courses(db: Session = Depends(get_db)):
     return db.query(models.Course).all()
 
-# ------------------------
-# Semesters
-# ------------------------
 
 @app.post("/api/semesters/", response_model=schemas.Semester)
 def create_semester(semester: schemas.SemesterCreate, db: Session = Depends(get_db)):
@@ -89,9 +97,6 @@ def create_semester(semester: schemas.SemesterCreate, db: Session = Depends(get_
 def read_semesters(db: Session = Depends(get_db)):
     return db.query(models.Semester).all()
 
-# ------------------------
-# Faculties
-# ------------------------
 
 @app.post("/api/faculties/", response_model=schemas.Faculty)
 def create_faculty(faculty: schemas.FacultyCreate, db: Session = Depends(get_db)):
@@ -105,9 +110,6 @@ def create_faculty(faculty: schemas.FacultyCreate, db: Session = Depends(get_db)
 def read_faculties(db: Session = Depends(get_db)):
     return db.query(models.Faculty).all()
 
-# ------------------------
-# Classrooms
-# ------------------------
 
 @app.post("/api/classrooms/", response_model=schemas.Classroom)
 def create_classroom(classroom: schemas.ClassroomCreate, db: Session = Depends(get_db)):
@@ -121,9 +123,6 @@ def create_classroom(classroom: schemas.ClassroomCreate, db: Session = Depends(g
 def read_classrooms(db: Session = Depends(get_db)):
     return db.query(models.Classroom).all()
 
-# ------------------------
-# Subjects
-# ------------------------
 
 @app.post("/api/subjects/", response_model=schemas.Subject)
 def create_subject(subject: schemas.SubjectCreate, db: Session = Depends(get_db)):
@@ -137,13 +136,11 @@ def create_subject(subject: schemas.SubjectCreate, db: Session = Depends(get_db)
 def read_subjects(db: Session = Depends(get_db)):
     return db.query(models.Subject).all()
 
-# ------------------------
-# Timetables
-# ------------------------
 
 @app.get("/api/timetables/", response_model=List[schemas.Timetable])
 def read_timetables(db: Session = Depends(get_db)):
     return db.query(models.Timetable).all()
+
 
 @app.get("/api/timetables/latest", response_model=schemas.Timetable)
 def read_latest_timetable(db: Session = Depends(get_db)):
@@ -152,6 +149,7 @@ def read_latest_timetable(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No timetables found")
     return tt
 
+
 @app.get("/api/timetables/{timetable_id}", response_model=schemas.Timetable)
 def read_timetable(timetable_id: int, db: Session = Depends(get_db)):
     tt = db.query(models.Timetable).filter(models.Timetable.id == timetable_id).first()
@@ -159,9 +157,6 @@ def read_timetable(timetable_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Timetable not found")
     return tt
 
-# ------------------------
-# Generate Timetable
-# ------------------------
 
 @app.post("/api/generate/")
 def generate_timetable_endpoint(db: Session = Depends(get_db)):
@@ -170,9 +165,6 @@ def generate_timetable_endpoint(db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=result["error"])
     return result
 
-# ------------------------
-# Local run (optional)
-# ------------------------
 
 if __name__ == "__main__":
     import uvicorn
