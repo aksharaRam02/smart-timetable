@@ -13,7 +13,12 @@ const END_HOUR = 17;
 document.addEventListener('DOMContentLoaded', async () => {
     // Check URL for ID
     const urlParams = new URLSearchParams(window.location.search);
-    const ttId = urlParams.get('id');
+let ttId = urlParams.get('id');
+
+if (!ttId) {
+    const all = await apiRequest('/timetables/');
+    ttId = all[0].id;   // auto load latest timetable
+}
 
     if (!ttId) {
         showToast('No timetable ID provided in URL', 'error');
@@ -183,3 +188,4 @@ async function apiRequest(path) {
 
     return res.json();
 }
+
